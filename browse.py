@@ -1,27 +1,26 @@
 """
-Display a document using Tkinter
+Display a document using PyMuPDF and PySimpleGui
 -------------------------------------------------------------------------------
 License: GNU GPL V3+
-(c) 2018-2019 Jorj X. McKie
+(c) 2018-2019 Jorj X. McKie, 2023 Piotr Chamera
 
 Usage
 -----
-python browse.py input.pdf
+python browse.py input_file_name
+
+or
+
+python browse.py
 
 Description
 -----------
 Get filename and start displaying page 1. Please note that all file types
 of MuPDF are supported (including EPUB e-books and HTML files for example).
-Pages can be directly jumped to, or buttons can be used for paging.
 
-This version contains enhancements:
-* PIL no longer needed
-* Zooming is now flexible: only one button serves as a toggle. Keyboard arrow keys can
-  be used for moving through the window when zooming.
 
-We also interpret keyboard events (PageDown / PageUp) and mouse wheel actions
+We interpret keyboard events and mouse wheel actions
 to support paging as if a button was clicked. Similarly, we do not include
-a 'Quit' button. Instead, the ESCAPE key can be used, or cancelling the form.
+a 'Quit' button. Instead, the ESCAPE or Q key can be used, or cancelling the form.
 To improve paging performance, we are not directly creating pixmaps from
 pages, but instead from the fitz.DisplayList of the page. Each display list
 will be stored in a list and looked up by page number. This way, zooming
@@ -29,22 +28,11 @@ pixmaps and page re-visits will re-use a once-created display list.
 
 Dependencies
 ------------
-PyMuPDF v1.14.5+, PySimpleGUI, tkinter
+PyMuPDF, PySimpleGUI, tkinter, json
 """
 
 import sys
 import fitz
-
-#print(fitz.__doc__)
-
-#if not tuple(map(int, fitz.VersionBind.split("."))) >= (1, 14, 5):
-#    raise SystemExit("need PyMuPDF v1.14.5 for this script")
-
-#if sys.platform == "win32":
-#    import ctypes
-#
-#    ctypes.windll.shcore.SetProcessDpiAwareness(2)
-
 import PySimpleGUI as sg
 import tkinter as tk
 import json
@@ -168,10 +156,6 @@ def make_form_title():
     """
     return "Page %i of %i from file %s" % (cur_page + 1, page_count, fname)
 
-form = sg.FlexForm(
-    make_form_title(),
-    return_keyboard_events=True, location=(0, 0), use_default_focus=False
-)
 
 data, clip_pos = get_page(
     cur_page,  # read first page
@@ -198,16 +182,28 @@ layout = [  # the form layout
     [image_elem],
 ]
 
-form.Layout(layout)  # define the form
+#form = sg.FlexForm(
+form = sg.Window(
+    title=make_form_title(),
+    layout=layout,
+    return_keyboard_events=True,
+    location=(0, 0),
+    use_default_focus=False,
+    finalize=True,
+)
 
+#form.Layout(layout)  # define the form
 
-# define the buttons / events we want to handle
+# define keybindings not known to PySimpleGUI (key with modifier)
+form.bind('<Control-KeyPress-q>', "CTRL-Q")
+
+# define the events we want to handle
 def is_Enter(btn):
     return btn.startswith("Return:") or btn == chr(13)
 
 
 def is_Quit(btn):
-    return (btn is None) or btn == chr(27) or btn.startswith("Escape:")
+    return (btn is None) or btn.startswith("Escape:") or btn in (chr(27), 'q', 'Q', "CTRL-Q")
 
 
 def is_Next(btn):
