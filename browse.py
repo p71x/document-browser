@@ -207,7 +207,7 @@ def is_Enter(btn):
 
 
 def is_Quit(btn):
-    return btn == chr(27) or btn.startswith("Escape:")
+    return (btn is None) or btn == chr(27) or btn.startswith("Escape:")
 
 
 def is_Next(btn):
@@ -249,8 +249,8 @@ zoom_active = False
 
 while True:
     btn, value = form.Read()
-    if btn is None and (value is None or value["PageNumber"] is None):
-        break
+    #if btn is None and (value is None or value["PageNumber"] is None):
+    #    break
     if is_Quit(btn):
         with open(config_file_name, "w") as write_file:
             config["recent_file"] = {"file_name": fname, "page": cur_page}
@@ -300,3 +300,5 @@ while True:
     # update page number field
     if is_MyKeys(btn):
         form.set_title(make_form_title())
+
+form.close()
