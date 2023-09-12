@@ -90,14 +90,15 @@ if not fname:
     sg.Popup("Cancelling:", "No filename supplied")
     sys.exit("Cancelled: no filename supplied")
 
-doc = fitz.open(fname)
-page_count = len(doc)
+def open_file_to_browse(fname):
+    doc = fitz.open(fname)
+    page_count = len(doc)
+    return doc, page_count
+
+doc, page_count = open_file_to_browse(fname)
 
 # allocate storage for page display lists
 dlist_tab = [None] * page_count
-
-title = "PyMuPDF display of '%s', pages: %i" % (fname, page_count)
-
 
 # ------------------------------------------------------------------------------
 # read the page data
@@ -161,8 +162,15 @@ root.destroy()
 del root
 # ------------------------------------------------------------------------------
 
+def make_form_title():
+    """
+    Compose string for main window title.
+    """
+    return "Page %i of %i from file %s" % (cur_page + 1, page_count, fname)
+
 form = sg.FlexForm(
-    title, return_keyboard_events=True, location=(0, 0), use_default_focus=False
+    make_form_title(),
+    return_keyboard_events=True, location=(0, 0), use_default_focus=False
 )
 
 data, clip_pos = get_page(
@@ -178,15 +186,15 @@ goto = sg.InputText(
 )  # for display & input
 
 layout = [  # the form layout
-    [
-        sg.ReadFormButton("Next"),
-        sg.ReadFormButton("Prior"),
-        sg.Text("Page:"),
-        goto,
-        sg.Text("(%i)" % page_count),
-        sg.ReadFormButton("Zoom"),
-        sg.Text("(toggle on/off, use arrows to navigate while zooming)"),
-    ],
+##    [
+##        #sg.ReadFormButton("Next"),
+##        #sg.ReadFormButton("Prior"),
+##        sg.Text("Page:"),
+##        goto,
+##        sg.Text("(%i)" % page_count),
+##        sg.ReadFormButton("Zoom"),
+##        sg.Text("(toggle on/off, use arrows to navigate while zooming)"),
+##    ],
     [image_elem],
 ]
 
@@ -291,4 +299,4 @@ while True:
 
     # update page number field
     if is_MyKeys(btn):
-        goto.Update(str(cur_page + 1))
+        form.set_title(make_form_title())
