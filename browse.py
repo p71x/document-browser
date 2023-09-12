@@ -35,20 +35,32 @@ PyMuPDF v1.14.5+, PySimpleGUI, tkinter
 import sys
 import fitz
 
-print(fitz.__doc__)
+#print(fitz.__doc__)
 
-if not tuple(map(int, fitz.VersionBind.split("."))) >= (1, 14, 5):
-    raise SystemExit("need PyMuPDF v1.14.5 for this script")
+#if not tuple(map(int, fitz.VersionBind.split("."))) >= (1, 14, 5):
+#    raise SystemExit("need PyMuPDF v1.14.5 for this script")
 
-if sys.platform == "win32":
-    import ctypes
-
-    ctypes.windll.shcore.SetProcessDpiAwareness(2)
+#if sys.platform == "win32":
+#    import ctypes
+#
+#    ctypes.windll.shcore.SetProcessDpiAwareness(2)
 
 import PySimpleGUI as sg
 import tkinter as tk
+import json
+import os.path
 
-if len(sys.argv) == 1:
+# use config file if present in current directory
+config_file_name = "./browse.config"
+
+if os.path.isfile(config_file_name):
+    with open(config_file_name, "r") as read_file:
+        config = json.load(read_file)
+else:
+    config = {}
+
+
+def get_filename_from_GUI():
     fname = sg.PopupGetFile(
         "Select file and filetype to open:",
         title="PyMuPDF Document Browser",
@@ -62,8 +74,17 @@ if len(sys.argv) == 1:
             # add more document types here
         ),
     )
+    return fname
+
+if "recent_file" in config:
+    fname = config["recent_file"]["file_name"]
+    cur_page = config["recent_file"]["page"]
+elif len(sys.argv) == 1:
+    fname = get_filename_from_GUI()
+    cur_page = 0
 else:
     fname = sys.argv[1]
+    cur_page = 0
 
 if not fname:
     sg.Popup("Cancelling:", "No filename supplied")
@@ -144,7 +165,6 @@ form = sg.FlexForm(
     title, return_keyboard_events=True, location=(0, 0), use_default_focus=False
 )
 
-cur_page = 0
 data, clip_pos = get_page(
     cur_page,  # read first page
     zoom=False,  # not zooming yet
@@ -183,11 +203,11 @@ def is_Quit(btn):
 
 
 def is_Next(btn):
-    return btn.startswith("Next") or btn == "MouseWheel:Down"
+    return btn.startswith("Next") or btn == "MouseWheel:Down" or btn.startswith("Up:") or btn.startswith("Right:")
 
 
 def is_Prior(btn):
-    return btn.startswith("Prior") or btn == "MouseWheel:Up"
+    return btn.startswith("Prior") or btn == "MouseWheel:Up" or btn.startswith("Down:") or btn.startswith("Left:")
 
 
 def is_Up(btn):
@@ -224,6 +244,9 @@ while True:
     if btn is None and (value is None or value["PageNumber"] is None):
         break
     if is_Quit(btn):
+        with open(config_file_name, "w") as write_file:
+            config["recent_file"] = {"file_name": fname, "page": cur_page}
+            json.dump(config, write_file)
         break
     zoom_pressed = False
     zoom = False
