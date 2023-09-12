@@ -198,9 +198,6 @@ form = sg.Window(
 form.bind('<Control-KeyPress-q>', "CTRL-Q")
 
 # define the events we want to handle
-def is_Enter(btn):
-    return btn.startswith("Return:") or btn == chr(13)
-
 
 def is_Quit(btn):
     return (btn is None) or btn.startswith("Escape:") or btn in (chr(27), 'q', 'Q', "CTRL-Q")
@@ -213,6 +210,8 @@ def is_Next(btn):
 def is_Prior(btn):
     return btn.startswith("Prior") or btn == "MouseWheel:Up" or btn.startswith("Down:") or btn.startswith("Left:")
 
+def is_Open(btn):
+    return btn in ('o', 'O')
 
 def is_Up(btn):
     return btn.startswith("Up:")
@@ -235,7 +234,7 @@ def is_Zoom(btn):
 
 
 def is_MyKeys(btn):
-    return any((is_Enter(btn), is_Next(btn), is_Prior(btn), is_Zoom(btn)))
+    return any((is_Next(btn), is_Prior(btn), is_Zoom(btn), is_Open(btn)))
 
 
 # old page store and zoom toggle
@@ -255,12 +254,16 @@ while True:
     zoom_pressed = False
     zoom = False
 
-    if is_Enter(btn):
-        try:
-            cur_page = int(value["PageNumber"]) - 1  # check if valid
-        except:
-            cur_page = 0  # this guy's trying to fool me
-
+    if is_Open(btn):
+        fname = get_filename_from_GUI()
+        if not fname:
+            sg.Popup("Cancelling:", "No filename supplied")
+            sys.exit("Cancelled: no filename supplied")
+        doc = fitz.open(fname)
+        page_count = len(doc)
+        dlist_tab = [None] * page_count
+        cur_page = 0
+    
     elif is_Next(btn):
         cur_page += 1
     elif is_Prior(btn):
