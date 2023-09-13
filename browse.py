@@ -49,12 +49,44 @@ import os.path
 # use config file if present in current directory
 config_file_name = "./browse.config"
 
-if os.path.isfile(config_file_name):
-    with open(config_file_name, "r") as read_file:
-        config = json.load(read_file)
-else:
-    config = {}
+class Configuration:
+    """
+    Application configuration store and persistency.
+    """
 
+    def __init__(self, path):
+        self.path = path
+        self._config = dict()
+
+        if os.path.isfile(path):
+            with open(path, "r") as read_file:
+                self._config = json.load(read_file)
+
+    def save(self):
+        with open(self.path, "w") as write_file:
+            json.dump(self._config, write_file)
+
+    def get_history(self):
+        if 'history' in self._config:
+            return self._config['history']
+        else:
+            return None
+
+    def get_view_history(self, path):
+        if 'history' in self._config:
+            return next((x for x in self._config["history"] if x['file_name'] == path),
+                        None)        
+
+    def update_history(self, view_dictionary):
+        if 'history' not in self._config:
+            self._config['history'] = [view_dictionary, ]
+        else:
+            history = self._config["history"]
+            history = [x for x in history if x['file_name'] != view_dictionary['file_name']]
+            history.insert(0, view_dictionary)
+            self._config["history"] = history
+        
+configuration = Configuration(config_file_name)
 
 # ------------------------------------------------------------------------------
 # ViewDoc class
@@ -254,8 +286,8 @@ def get_page_number_from_GUI():
 # startup sequence - determine document to open
 # ------------------------------------------------------------------------------
 
-if "recent_file" in config:
-    view = DocumentView.from_config(config["recent_file"], max_size=max_size)
+if configuration.get_history():
+    view = DocumentView.from_config(configuration.get_history()[0], max_size=max_size)
 elif len(sys.argv) == 1:
     view = DocumentView(get_filename_from_GUI(), page_index=0, max_size=max_size)
 elif len(sys.argv) == 2 and os.path.isfile(sys.argv[1]):
@@ -334,9 +366,8 @@ while True:
     btn, value = form.Read()
 
     if is_Quit(btn):
-        with open(config_file_name, "w") as write_file:
-            config["recent_file"] = view.config_dictionary()
-            json.dump(config, write_file)
+        configuration.update_history(view.config_dictionary())
+        configuration.save()
         break
 
     if is_Open(btn):
@@ -344,7 +375,13 @@ while True:
         if not fname:
             sg.Popup("Cancelling:", "No filename supplied")
             sys.exit("Cancelled: no filename supplied")
-        view = DocumentView(fname, page_index=0, max_size=max_size)
+        configuration.update_history(view.config_dictionary())
+        configuration.save()
+        view_history = configuration.get_view_history(fname)
+        if view_history:
+            view = DocumentView.from_config(view_history, max_size=max_size)
+        else:
+            view = DocumentView(fname, page_index=0, max_size=max_size)
     
     elif is_Next(btn):
         view.next_page()
