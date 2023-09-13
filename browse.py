@@ -175,6 +175,18 @@ class DocumentView:
             next_page -= page_count
         self.page_index = next_page
 
+    def go_to_page(self, index):
+        """
+        Go to page with given index (1-based) but check if not out of bounds.
+        """
+        page = index - 1
+        if page >= self.doc_page_count:
+            self.page_index = page_count - 1
+        elif page < 0:
+            self.page_index = 0
+        else:
+            self.page_index = page
+
     def toggle_colorspace(self):
         """
         Switch between Gray and RGB colorspaces.
@@ -196,11 +208,11 @@ max_height = h - 55
 max_size = (max_width, max_height)
 
 # ------------------------------------------------------------------------------
-# startup sequence - determine document to open
+# utilities and popups
 # ------------------------------------------------------------------------------
 
 def get_filename_from_GUI():
-    fname = sg.PopupGetFile(
+    fname = sg.popup_get_file(
         "Select file and filetype to open:",
         title="PyMuPDF Document Browser",
         file_types=(
@@ -215,6 +227,23 @@ def get_filename_from_GUI():
         no_window=True,
     )
     return fname
+
+def get_page_number_from_GUI():
+    try:
+        index = int(sg.popup_get_text('Enter page number',
+                                      no_titlebar=True,
+                                      grab_anywhere=True,
+                                      keep_on_top=True,
+                                      modal=False,
+                                      )
+                    )
+        return index
+    except:
+        return None
+        
+# ------------------------------------------------------------------------------
+# startup sequence - determine document to open
+# ------------------------------------------------------------------------------
 
 if "recent_file" in config:
     view = DocumentView.from_config(config["recent_file"], max_size=max_size)
@@ -265,6 +294,9 @@ def is_Next(btn):
 def is_Prior(btn):
     return btn.startswith("Prior") or btn == "MouseWheel:Up" or btn.startswith("Down:") or btn.startswith("Left:")
 
+def is_Goto(btn):
+    return btn in ('g', 'G')
+    
 def is_Open(btn):
     return btn in ('o', 'O')
 
@@ -284,7 +316,7 @@ def is_ToggleColorspace(btn):
     return btn in ('c', 'C') 
 
 def is_MyKeys(btn):
-    return any((is_Next(btn), is_Prior(btn), is_ZoomIn(btn), is_ZoomOut(btn), is_Open(btn), is_ToggleColorspace(btn)))
+    return any((is_Next(btn), is_Prior(btn), is_Goto(btn), is_ZoomIn(btn), is_ZoomOut(btn), is_Open(btn), is_ToggleColorspace(btn)))
 
 
 # old page store and zoom toggle
@@ -310,6 +342,10 @@ while True:
         view.next_page()
     elif is_Prior(btn):
         view.previous_page()
+    elif is_Goto(btn):
+        index = get_page_number_from_GUI()
+        if index:
+            view.go_to_page(index)
     elif is_ZoomIn(btn):
         view.zoom *= 1.25
     elif is_ZoomOut(btn):
