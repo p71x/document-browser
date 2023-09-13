@@ -90,12 +90,18 @@ class DocumentView:
 
     @classmethod
     def _colorspace_from_name(cls, name):
-        map = {'DeviceGRAY': fitz.csGRAY,
+        """
+        Utility for mapping from colorspace designator to colorspace object.
+        """
+        map = {'DeviceGray': fitz.csGRAY,
                'DeviceRGB': fitz.csRGB,
                }
         return map[name]
     
     def config_dictionary(self):
+        """
+        Return dictionary for saving parameters in config file.
+        """
         return {"file_name": self.file_name,
                 "page": self.page_index,
                 "zoom": self.zoom,
@@ -165,7 +171,16 @@ class DocumentView:
         if next_page >= self.doc_page_count:
             next_page -= page_count
         self.page_index = next_page
-   
+
+    def toggle_colorspace(self):
+        """
+        Switch between Gray and RGB colorspaces.
+        """
+        if self.colorspace is fitz.csGRAY:
+            self.colorspace = fitz.csRGB
+        else:
+            self.colorspace = fitz.csGRAY
+            
 
 # ------------------------------------------------------------------------------
 # get physical screen dimension to determine the page image max size
@@ -279,8 +294,11 @@ def is_ZoomFit(btn):
 def is_Zoom100(btn):
     return btn in ('0',) 
 
+def is_ToggleColorspace(btn):
+    return btn in ('c', 'C') 
+
 def is_MyKeys(btn):
-    return any((is_Next(btn), is_Prior(btn), is_ZoomIn(btn), is_ZoomOut(btn), is_Open(btn)))
+    return any((is_Next(btn), is_Prior(btn), is_ZoomIn(btn), is_ZoomOut(btn), is_Open(btn), is_ToggleColorspace(btn)))
 
 
 # old page store and zoom toggle
@@ -314,6 +332,8 @@ while True:
         view.zoom = view.get_fit_zoom()
     elif is_Zoom100(btn):
         view.zoom = 1.0
+    elif is_ToggleColorspace(btn):
+        view.toggle_colorspace()
 
     # update view
     image_elem.Update(data=view.get_page_image())
