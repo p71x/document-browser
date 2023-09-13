@@ -61,6 +61,7 @@ def get_filename_from_GUI():
             ("HTML", "*.htm*"),
             # add more document types here
         ),
+        no_window=True,
     )
     return fname
 
