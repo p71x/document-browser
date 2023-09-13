@@ -34,7 +34,6 @@ PyMuPDF, PySimpleGUI, tkinter, json
 import sys
 import fitz
 import PySimpleGUI as sg
-#import tkinter as tk
 import json
 import os.path
 
@@ -93,7 +92,7 @@ dlist_tab = [None] * page_count
 # read the page data
 # ------------------------------------------------------------------------------
 def get_page(pno, zoom=False, max_size=None):
-    """Return a tkinter.PhotoImage or a PNG image for a document page number.
+    """Return a tkinter.PhotoImage for a document page number.
     :arg int pno: 0-based page number
     :arg zoom: top-left of old clip rect, and one of -1, 0, +1 for dim. x or y
                to indicate the arrow key pressed
@@ -138,12 +137,10 @@ def get_page(pno, zoom=False, max_size=None):
 
 
 # ------------------------------------------------------------------------------
-
-# ------------------------------------------------------------------------------
 # get physical screen dimension to determine the page image max size
 # ------------------------------------------------------------------------------
 
-print("screen size = " + str(sg.Window.get_screen_size()))
+# print("screen size = " + str(sg.Window.get_screen_size()))
 w, h = sg.Window.get_screen_size()
 max_width = w - 20
 max_height = h - 55
@@ -197,15 +194,16 @@ form = sg.Window(
 #form.Layout(layout)  # define the form
 
 # define keybindings not known to PySimpleGUI (key with modifier)
-form.bind('<Control-KeyPress-q>', "CTRL-Q")
-
-
+form.bind('<Control-KeyPress-q>', "key-CTRL-Q")
+form.bind('<KeyPress-q>', "key-q")
+form.bind('<Shift-KeyPress-q>', "key-Q")
+form.bind('<Alt-KeyPress-q>', "key-ALT-q") # this is needed to suppress 'ALT-q' to act as 'q' (exit application)
 
 
 # define the events we want to handle
 
 def is_Quit(btn):
-    return (btn is None) or btn.startswith("Escape:") or btn in (chr(27), 'q', 'Q', "CTRL-Q")
+    return btn == sg.WIN_CLOSED or btn.startswith("Escape:") or btn in (chr(27), 'key-q', 'key-SHIFT-Q', "key-CTRL-Q")
 
 
 def is_Next(btn):
