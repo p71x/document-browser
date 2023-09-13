@@ -262,28 +262,11 @@ def is_Quit(btn):
 def is_Next(btn):
     return btn.startswith("Next") or btn == "MouseWheel:Down" or btn.startswith("Up:") or btn.startswith("Right:")
 
-
 def is_Prior(btn):
     return btn.startswith("Prior") or btn == "MouseWheel:Up" or btn.startswith("Down:") or btn.startswith("Left:")
 
 def is_Open(btn):
     return btn in ('o', 'O')
-
-def is_Up(btn):
-    return btn.startswith("Up:")
-
-
-def is_Down(btn):
-    return btn.startswith("Down:")
-
-
-def is_Left(btn):
-    return btn.startswith("Left:")
-
-
-def is_Right(btn):
-    return btn.startswith("Right:")
-
 
 def is_ZoomIn(btn):
     return btn == '+'
