@@ -358,9 +358,9 @@ def is_ToggleColorspace(btn):
 def is_MyKeys(btn):
     return any((is_Next(btn), is_Prior(btn), is_Goto(btn), is_ZoomIn(btn), is_ZoomOut(btn), is_Open(btn), is_ToggleColorspace(btn)))
 
-
-# old page store and zoom toggle
-old_page = 0
+# ------------------------------------------------------------------------------
+# main event loop
+# ------------------------------------------------------------------------------
 
 while True:
     btn, value = form.Read()
