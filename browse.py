@@ -146,6 +146,9 @@ class DocumentView:
         return zoom
 
     def set_zoom(self, zoom):
+        """
+        Set zoom factor.
+        """
         self.zoom = zoom
         
     def get_view_title(self):
