@@ -34,7 +34,7 @@ PyMuPDF, PySimpleGUI, tkinter, json
 import sys
 import fitz
 import PySimpleGUI as sg
-import tkinter as tk
+#import tkinter as tk
 import json
 import os.path
 
@@ -133,22 +133,22 @@ def get_page(pno, zoom=False, max_size=None):
         # clip rect is ready, now fill it
         mat = mat_0 * fitz.Matrix(2, 2)  # zoom matrix
         pix = dlist.get_pixmap(alpha=False, matrix=mat, clip=clip)
-    img = pix.tobytes("ppm")  # make PPM image from pixmap for tkinter
+    img = pix.tobytes("ppm")  # make PPM image from pixmap for tkinter, requires PyMuPDF version > 1.14.5
     return img, clip.tl  # return image, clip position
 
 
 # ------------------------------------------------------------------------------
 
-
 # ------------------------------------------------------------------------------
 # get physical screen dimension to determine the page image max size
 # ------------------------------------------------------------------------------
-root = tk.Tk()
-max_width = root.winfo_screenwidth() - 20
-max_height = root.winfo_screenheight() - 135
+
+print("screen size = " + str(sg.Window.get_screen_size()))
+w, h = sg.Window.get_screen_size()
+max_width = w - 20
+max_height = h - 55
 max_size = (max_width, max_height)
-root.destroy()
-del root
+
 # ------------------------------------------------------------------------------
 
 def make_form_title():
@@ -156,6 +156,7 @@ def make_form_title():
     Compose string for main window title.
     """
     return "Page %i of %i from file %s" % (cur_page + 1, page_count, fname)
+
 
 
 data, clip_pos = get_page(
@@ -197,6 +198,9 @@ form = sg.Window(
 
 # define keybindings not known to PySimpleGUI (key with modifier)
 form.bind('<Control-KeyPress-q>', "CTRL-Q")
+
+
+
 
 # define the events we want to handle
 
