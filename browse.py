@@ -17,14 +17,23 @@ Description
 Get filename and start displaying page 1. Please note that all file types
 of MuPDF are supported (including EPUB e-books and HTML files for example).
 
+We utilise keyboard events and mouse wheel actions to trigger actions.
+There are no buttons. Actions supported (action, key):
+- Exit: q, Q, Esc,
+- Open file: o, O,
+- Next page: Right, Up, PageDown
+- Previous page: Left, Down, PageUp
+- Go to page: g, G
+- Switch colorspace (between Grayscale and RGB): c, C
+- Zoom in: +
+- Zoom out: -
+- Zoom fit: f, F, *
+- Zoom 100%: 0 (zero key) 
 
-We interpret keyboard events and mouse wheel actions
-to support paging as if a button was clicked. Similarly, we do not include
-a 'Quit' button. Instead, the ESCAPE or Q key can be used, or cancelling the form.
 To improve paging performance, we are not directly creating pixmaps from
 pages, but instead from the fitz.DisplayList of the page. Each display list
-will be stored in a list and looked up by page number. This way, zooming
-pixmaps and page re-visits will re-use a once-created display list.
+will be stored in a dictionary and looked up by page number. This way,
+zooming and page re-visits will re-use a once-created display list.
 
 Dependencies
 ------------
@@ -286,7 +295,6 @@ form.bind('<Alt-KeyPress-q>', "key-ALT-q") # this is needed to suppress 'ALT-q' 
 
 def is_Quit(btn):
     return btn == sg.WIN_CLOSED or btn.startswith("Escape:") or btn in (chr(27), 'key-q', 'key-SHIFT-Q', "key-CTRL-Q")
-
 
 def is_Next(btn):
     return btn.startswith("Next") or btn == "MouseWheel:Down" or btn.startswith("Up:") or btn.startswith("Right:")
