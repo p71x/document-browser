@@ -8,7 +8,7 @@ Simple viewer for file formats supported by PyMuPDF library (PDF, EPUB, MOBI, ..
 
 to open new file: `python browse.py input_file_name`
 
-to prompt for file or open last viewed file (if config file present): `python browse.py`
+to prompt for file or open last viewed file (if config file present): `python browse.py` or `browse.bat`
 
 ## Description
 
