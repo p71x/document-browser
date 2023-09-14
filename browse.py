@@ -214,7 +214,7 @@ class DocumentView:
         """
         next_page = self.page_index + 1
         if next_page >= self.doc_page_count:
-            next_page -= page_count
+            next_page -= self.doc_page_count
         self.page_index = next_page
 
     def go_to_page(self, index):
@@ -319,6 +319,7 @@ form.bind('<Control-KeyPress-q>', "key-CTRL-Q")
 form.bind('<KeyPress-q>', "key-q")
 form.bind('<Shift-KeyPress-q>', "key-Q")
 form.bind('<Alt-KeyPress-q>', "key-ALT-q") # this is needed to suppress 'ALT-q' to act as 'q' (exit application)
+form.bind('<KeyPress-Home>', "key-Home")
 
 
 # define the events we want to handle
@@ -334,6 +335,9 @@ def is_Prior(btn):
 
 def is_Goto(btn):
     return btn in ('g', 'G')
+    
+def is_GotoFirstPage(btn):
+    return btn in ('key-Home',)
     
 def is_Open(btn):
     return btn in ('o', 'O')
@@ -354,7 +358,9 @@ def is_ToggleColorspace(btn):
     return btn in ('c', 'C') 
 
 def is_MyKeys(btn):
-    return any((is_Next(btn), is_Prior(btn), is_Goto(btn), is_ZoomIn(btn), is_ZoomOut(btn), is_Open(btn), is_ToggleColorspace(btn)))
+    return any((is_Next(btn), is_Prior(btn), is_Goto(btn), is_GotoFirstPage(btn),
+                is_ZoomIn(btn), is_ZoomOut(btn),
+                is_Open(btn), is_ToggleColorspace(btn)))
 
 # ------------------------------------------------------------------------------
 # main event loop
@@ -389,6 +395,8 @@ while True:
         index = get_page_number_from_GUI()
         if index:
             view.go_to_page(index)
+    elif is_GotoFirstPage(btn):
+        view.go_to_page(0)
     elif is_ZoomIn(btn):
         view.zoom *= 1.25
     elif is_ZoomOut(btn):
