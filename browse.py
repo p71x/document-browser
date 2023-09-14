@@ -64,7 +64,7 @@ class Configuration:
 
     def save(self):
         with open(self.path, "w") as write_file:
-            json.dump(self._config, write_file)
+            json.dump(self._config, write_file, indent=2)
 
     def get_history(self):
         if 'history' in self._config:
