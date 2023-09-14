@@ -47,6 +47,8 @@ import PySimpleGUI as sg
 import json
 import os.path
 
+print("PyMuPDF version: ", fitz.version)
+
 # use config file if present in current directory
 config_file_name = "./browse.config"
 
@@ -107,7 +109,7 @@ class DocumentView:
     colorspace = fitz.csRGB # colorspace of page rendering
     """
     
-    def __init__(self, file_name, page_index=0, max_size=None, colorspace=fitz.csRGB, zoom=1.0 ):
+    def __init__(self, file_name, page_index=0, max_size=None, colorspace=fitz.csRGB, zoom=1.0, dpi=96 ):
         self.file_name = file_name
         self.doc = fitz.open(file_name)
         self.doc_page_count = len(self.doc)
@@ -116,6 +118,7 @@ class DocumentView:
         self.cache = dict()
         self.max_size = max_size
         self.colorspace = colorspace
+        self.dpi=dpi
 
     @classmethod
     def from_config(cls, config_dictionary, max_size=None):
@@ -167,8 +170,11 @@ class DocumentView:
         Return a tkinter.PhotoImage for a document page index (0-based)
         """
         display_list = self.get_display_list()
-        matrix = fitz.Matrix(self.zoom, self.zoom)
-        pixmap = display_list.get_pixmap(matrix=matrix, colorspace=self.colorspace, alpha=False)
+        dpi_correction = self.dpi / 72
+        matrix = fitz.Matrix(self.zoom * dpi_correction, self.zoom * dpi_correction)
+        pixmap = display_list.get_pixmap(matrix=matrix, #dpi=96,
+                                         colorspace=self.colorspace,
+                                         alpha=False)
         return pixmap.tobytes("ppm")  # make PPM image from pixmap for tkinter, requires PyMuPDF version > 1.14.5
 
     def get_fit_zoom(self, fit_size=None):
