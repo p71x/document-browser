@@ -389,16 +389,14 @@ while True:
 
     if is_Open(btn):
         fname = get_filename_from_GUI()
-        if not fname:
-            sg.Popup("Cancelling:", "No filename supplied")
-            sys.exit("Cancelled: no filename supplied")
-        configuration.update_history(view.config_dictionary())
-        configuration.save()
-        view_history = configuration.get_view_history(fname)
-        if view_history:
-            view = DocumentView.from_config(view_history, max_size=max_size)
-        else:
-            view = DocumentView(fname, page_index=0, max_size=max_size)
+        if fname:
+            configuration.update_history(view.config_dictionary())
+            configuration.save()
+            view_history = configuration.get_view_history(fname)
+            if view_history:
+                view = DocumentView.from_config(view_history, max_size=max_size)
+            else:
+                view = DocumentView(fname, page_index=0, max_size=max_size)
     
     elif is_Next(btn):
         view.next_page()
