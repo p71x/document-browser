@@ -300,10 +300,6 @@ else:
 
 image_elem = sg.Image(data=view.get_page_image())  # make image element
 
-##goto = sg.InputText(
-##    str(cur_page + 1), size=(5, 1), do_not_clear=True, key="PageNumber"
-##)  # for display & input
-
 layout = [  # the form layout
     [image_elem],
 ]
@@ -311,6 +307,7 @@ layout = [  # the form layout
 form = sg.Window(
     title=view.get_view_title(),
     layout=layout,
+    resizable=True,
     return_keyboard_events=True,
     location=(0, 0),
     use_default_focus=False,
