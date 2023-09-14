@@ -14,7 +14,8 @@ python browse.py
 
 Description
 -----------
-Get filename and start displaying page 1. Please note that all file types
+Get filename and start displaying page 1. If filename is saved in history,
+then start with saved page number and zoom. Please note that all file types
 of MuPDF are supported (including EPUB e-books and HTML files for example).
 
 We utilise keyboard events and mouse wheel actions to trigger actions.
@@ -37,7 +38,7 @@ zooming and page re-visits will re-use a once-created display list.
 
 Dependencies
 ------------
-PyMuPDF, PySimpleGUI, tkinter, json
+PyMuPDF > 1.14.5, PySimpleGUI (tkinter), json
 """
 
 import sys
