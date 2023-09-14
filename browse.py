@@ -276,6 +276,7 @@ def get_filename_from_GUI():
             ("Fiction Books", "*.fb2"),
             ("Comic Books", "*.cbz"),
             ("HTML", "*.htm*"),
+            ("All", "*.*"),
             # add more document types here
         ),
         no_window=True,
