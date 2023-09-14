@@ -47,7 +47,8 @@ import PySimpleGUI as sg
 import json
 import os.path
 
-print("PyMuPDF version: ", fitz.version)
+# print("PyMuPDF version: ", fitz.version)
+# print(fitz.__doc__)
 
 # use config file if present in current directory
 config_file_name = "./browse.config"
@@ -107,9 +108,10 @@ class DocumentView:
     cache = dict; cache of viewed pages (as pixmaps)
     max_size = maximal dimensions of viewed page, tuple (width, height)
     colorspace = fitz.csRGB # colorspace of page rendering
+    dpi - display dpi
     """
     
-    def __init__(self, file_name, page_index=0, max_size=None, colorspace=fitz.csRGB, zoom=1.0, dpi=96 ):
+    def __init__(self, file_name, page_index=0, max_size=None, colorspace=fitz.csRGB, zoom=1.0, dpi=94):
         self.file_name = file_name
         self.doc = fitz.open(file_name)
         self.doc_page_count = len(self.doc)
@@ -170,7 +172,8 @@ class DocumentView:
         Return a tkinter.PhotoImage for a document page index (0-based)
         """
         display_list = self.get_display_list()
-        dpi_correction = self.dpi / 72
+        # correction of scale to display dpi (default for PyMuPDF 72 dpi)
+        dpi_correction = self.dpi / 72 
         matrix = fitz.Matrix(self.zoom * dpi_correction, self.zoom * dpi_correction)
         pixmap = display_list.get_pixmap(matrix=matrix, #dpi=96,
                                          colorspace=self.colorspace,
@@ -191,6 +194,9 @@ class DocumentView:
             zoom = min(1, fit_width_zoom, fit_height_zoom)
             if zoom == 1:
                 zoom = min(fit_width_zoom, fit_height_zoom)
+        # correction of zoom to display dpi (default for PyMuPDF 72 dpi)
+        dpi_correction = self.dpi / 72 
+        zoom = zoom / dpi_correction
         return zoom
 
     def set_zoom(self, zoom):
@@ -363,10 +369,10 @@ def is_Zoom100(btn):
 def is_ToggleColorspace(btn):
     return btn in ('c', 'C') 
 
-def is_MyKeys(btn):
-    return any((is_Next(btn), is_Prior(btn), is_Goto(btn), is_GotoFirstPage(btn),
-                is_ZoomIn(btn), is_ZoomOut(btn),
-                is_Open(btn), is_ToggleColorspace(btn)))
+##def is_Redraw(btn):
+##    return any((is_Next(btn), is_Prior(btn), is_Goto(btn), is_GotoFirstPage(btn),
+##                is_ZoomIn(btn), is_ZoomOut(btn), is_ZoomFit(btn), is_Zoom100(btn),
+##                is_Open(btn), is_ToggleColorspace(btn)))
 
 # ------------------------------------------------------------------------------
 # main event loop
@@ -417,8 +423,8 @@ while True:
     # update view
     image_elem.Update(data=view.get_page_image())
 
-    # update page number field
-    if is_MyKeys(btn):
-        form.set_title(view.get_view_title())
+    # update form title
+    #if is_Redraw(btn):
+    form.set_title(view.get_view_title())
 
 form.close()
