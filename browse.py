@@ -22,6 +22,7 @@ We utilise keyboard events and mouse wheel actions to trigger actions.
 There are no buttons. Actions supported (action, key):
 - Exit: q, Q, Esc,
 - Open file: o, O,
+- Open file from history: f, F,
 - Next page: Right, Up, PageDown
 - Previous page: Left, Down, PageUp
 - Go to page: g, G
@@ -265,7 +266,7 @@ max_size = (max_width, max_height)
 # utilities and popups
 # ------------------------------------------------------------------------------
 
-def get_filename_from_GUI():
+def get_filename_from_open_GUI():
     fname = sg.popup_get_file(
         "Select file and filetype to open:",
         title="PyMuPDF Document Browser",
@@ -283,6 +284,25 @@ def get_filename_from_GUI():
     )
     return fname
 
+def get_filename_from_history_GUI():
+    values = configuration.get_history()
+    # make list of history entries as human readable labels
+    labels = [value['file_name'] for value in values]
+    window = sg.Window(title = "Select file from history",
+                       layout = [[sg.Listbox(labels,
+                                             size=(80,10),
+                                             select_mode = 'single',
+                                             key='SELECTED')],
+                                 [sg.OK(), sg.Cancel()]
+                                ])
+    event, choice = window.read()
+    window.close()
+    if event == 'OK' and bool(choice['SELECTED']):
+        index = labels.index(choice['SELECTED'][0])
+        return values[index]
+    else:
+        return None
+
 def get_page_number_from_GUI():
     try:
         index = int(sg.popup_get_text('Enter page number',
@@ -295,7 +315,7 @@ def get_page_number_from_GUI():
         return index
     except:
         return None
-        
+
 # ------------------------------------------------------------------------------
 # startup sequence - determine document to open
 # ------------------------------------------------------------------------------
@@ -355,6 +375,9 @@ def is_GotoFirstPage(btn):
 def is_Open(btn):
     return btn in ('o', 'O')
 
+def is_OpenFromHistory(btn):
+    return btn in ('h', 'H')
+
 def is_ZoomIn(btn):
     return btn == '+'
 
@@ -388,7 +411,7 @@ while True:
         break
 
     if is_Open(btn):
-        fname = get_filename_from_GUI()
+        fname = get_filename_from_open_GUI()
         if fname:
             configuration.update_history(view.config_dictionary())
             configuration.save()
@@ -398,6 +421,13 @@ while True:
             else:
                 view = DocumentView(fname, page_index=0, max_size=max_size)
     
+    if is_OpenFromHistory(btn):
+        view_history = get_filename_from_history_GUI()
+        configuration.update_history(view.config_dictionary())
+        configuration.save()
+        if view_history and os.path.isfile(view_history['file_name']):
+            view = DocumentView.from_config(view_history, max_size=max_size)
+
     elif is_Next(btn):
         view.next_page()
     elif is_Prior(btn):
