@@ -22,6 +22,7 @@ We utilise keyboard events and mouse wheel actions to trigger actions.
 There are no buttons. Actions supported (action: key, alternative key...):
 - Exit: q, Q, Esc,
 - Open file: o, O,
+- Open file from history: f, F,
 - Next page: Right, Up, PageDown, Mouse:ScrollDown
 - Previous page: Left, Down, PageUp, Mouse:ScrollUp
 - Go to page: g, G
