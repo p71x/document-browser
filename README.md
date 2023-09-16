@@ -33,3 +33,7 @@ There are no buttons. Actions supported (action: key, alternative key...):
 - Zoom out: -
 - Zoom fit: f, F, *
 - Zoom 100%: 0 (zero key) 
+
+## License
+
+AGPL because of PyMuPDF license – and it is viral :(
