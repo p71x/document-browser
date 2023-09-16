@@ -1,7 +1,7 @@
 """
 Display a document using PyMuPDF and PySimpleGui
 -------------------------------------------------------------------------------
-License: GNU GPL V3+
+License: AGPL V3
 (c) 2018-2019 Jorj X. McKie, 2023 Piotr Chamera
 
 Usage
