@@ -20,6 +20,7 @@ but I tested it only with PDF and EPUB.
 
 We utilise keyboard events and mouse wheel actions to trigger actions.
 There are no buttons. Actions supported (action: key, alternative key...):
+- Help page: F1,
 - Exit: q, Q, Esc,
 - Open file: o, O,
 - Open file from history: f, F,
