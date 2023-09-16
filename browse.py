@@ -16,11 +16,17 @@ Description
 -----------
 Get filename and start displaying page 1. If filename is saved in history,
 then start with saved page number and zoom. Please note that all file types
-of MuPDF are supported (including EPUB e-books and HTML files for example).
+of MuPDF are supported (PDF, EPUB, MOBI e-books and others).
 
 We utilise keyboard events and mouse wheel actions to trigger actions.
-There are no buttons. Actions supported (action, key):
-- Exit: q, Q, Esc,
+There are no buttons.
+
+Dependencies
+------------
+PyMuPDF > 1.14.5, PySimpleGUI (tkinter), json
+"""
+
+help_text = """Actions supported (action, key):
 - Open file: o, O,
 - Open file from history: f, F,
 - Next page: Right, Up, PageDown
@@ -31,15 +37,8 @@ There are no buttons. Actions supported (action, key):
 - Zoom out: -
 - Zoom fit: f, F, *
 - Zoom 100%: 0 (zero key) 
-
-To improve paging performance, we are not directly creating pixmaps from
-pages, but instead from the fitz.DisplayList of the page. Each display list
-will be stored in a dictionary and looked up by page number. This way,
-zooming and page re-visits will re-use a once-created display list.
-
-Dependencies
-------------
-PyMuPDF > 1.14.5, PySimpleGUI (tkinter), json
+- Exit: q, Q, Esc,
+- Help page: F1
 """
 
 import sys
@@ -316,6 +315,18 @@ def get_page_number_from_GUI():
     except:
         return None
 
+def show_help_page_GUI():
+    text = help_text
+    window = sg.Window(title = "Available actions",
+                       layout = [[sg.Text(text,
+                                          size=(50,15),)],
+                                 [sg.OK(focus = True)],
+                                ],
+                       finalize = True)
+    event, value = window.read()
+    window.close()
+    return None
+
 # ------------------------------------------------------------------------------
 # startup sequence - determine document to open
 # ------------------------------------------------------------------------------
@@ -353,6 +364,7 @@ form.bind('<KeyPress-q>', "key-q")
 form.bind('<Shift-KeyPress-q>', "key-Q")
 form.bind('<Alt-KeyPress-q>', "key-ALT-q") # this is needed to suppress 'ALT-q' to act as 'q' (exit application)
 form.bind('<KeyPress-Home>', "key-Home")
+form.bind('<KeyPress-F1>', "key-F1")
 
 
 # define the events we want to handle
@@ -392,6 +404,9 @@ def is_Zoom100(btn):
 
 def is_ToggleColorspace(btn):
     return btn in ('c', 'C') 
+
+def is_ShowHelpPage(btn):
+    return btn in ('key-F1')
 
 ##def is_Redraw(btn):
 ##    return any((is_Next(btn), is_Prior(btn), is_Goto(btn), is_GotoFirstPage(btn),
@@ -448,6 +463,8 @@ while True:
         view.zoom = 1.0
     elif is_ToggleColorspace(btn):
         view.toggle_colorspace()
+    elif is_ShowHelpPage(btn):
+        show_help_page_GUI()
 
     # update view
     image_elem.Update(data=view.get_page_image())
