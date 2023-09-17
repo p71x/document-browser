@@ -1,7 +1,7 @@
 """
 Display a document using PyMuPDF and PySimpleGui
 -------------------------------------------------------------------------------
-License: AGPL V3
+License: GNU GPL V3+
 (c) 2018-2019 Jorj X. McKie, 2023 Piotr Chamera
 
 Usage
@@ -357,6 +357,9 @@ form = sg.Window(
     use_default_focus=False,
     finalize=True,
 )
+
+# center window at startup
+form.move_to_center()
 
 # define keybindings not known to PySimpleGUI (key with modifier)
 form.bind('<Control-KeyPress-q>', "key-CTRL-Q")
