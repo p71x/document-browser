@@ -488,6 +488,8 @@ view = app.view
 while True:
     event, value = view.form.Read()
 
+    # application events
+
     if is_Quit(event):
         app.configuration.update_history(view.config_dictionary())
         break
@@ -512,6 +514,11 @@ while True:
             view.close()
             view = DocumentView.from_config(view_history)
 
+    elif is_ShowHelpPage(event):
+        show_help_page_GUI()
+
+    # view events
+
     elif is_Next(event):
         view.next_page()
     elif is_Prior(event):
@@ -532,8 +539,6 @@ while True:
         view.zoom = 1.0
     elif is_ToggleColorspace(event):
         view.toggle_colorspace()
-    elif is_ShowHelpPage(event):
-        show_help_page_GUI()
 
     view.update()
 
