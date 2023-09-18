@@ -314,7 +314,7 @@ class DocumentView:
 
     def update(self):
         # update view
-        self.image_elem.Update(data=view.get_page_image())
+        self.image_elem.Update(data=self.get_page_image())
         # update form title
         self.form.set_title(self.get_view_title())
         self.get_location()
@@ -481,38 +481,36 @@ app = DocumentBrowser()
 
 app.start(sys.argv)
 
-view = app.view
-
 # main event loop
 
 while True:
-    event, value = view.form.Read()
+    event, value = app.view.form.Read()
 
     # application events
 
     if is_Quit(event):
-        app.configuration.update_history(view.config_dictionary())
+        app.configuration.update_history(app.view.config_dictionary())
         break
 
     if is_Open(event):
         fname = get_filename_from_open_GUI()
         if fname:
-            app.configuration.update_history(view.config_dictionary())
+            app.configuration.update_history(app.view.config_dictionary())
             view_history = app.configuration.get_view_history(fname)
             if view_history:
-                view.close()
-                view = DocumentView.from_config(view_history)
+                app.view.close()
+                app.view = DocumentView.from_config(view_history)
             else:
-                view.close()
-                view = DocumentView(fname, page_index=0)
-                view.center_window_on_screen()
+                app.view.close()
+                app.view = DocumentView(fname, page_index=0)
+                app.view.center_window_on_screen()
     
     if is_OpenFromHistory(event):
         view_history = get_filename_from_history_GUI(app)
-        app.configuration.update_history(view.config_dictionary())
+        app.configuration.update_history(app.view.config_dictionary())
         if view_history and os.path.isfile(view_history['file_name']):
-            view.close()
-            view = DocumentView.from_config(view_history)
+            app.view.close()
+            app.view = DocumentView.from_config(view_history)
 
     elif is_ShowHelpPage(event):
         show_help_page_GUI()
@@ -520,26 +518,26 @@ while True:
     # view events
 
     elif is_Next(event):
-        view.next_page()
+        app.view.next_page()
     elif is_Prior(event):
-        view.previous_page()
+        app.view.previous_page()
     elif is_Goto(event):
         index = get_page_number_from_GUI()
         if index:
-            view.go_to_page(index)
+            app.view.go_to_page(index)
     elif is_GotoFirstPage(event):
-        view.go_to_page(0)
+        app.view.go_to_page(0)
     elif is_ZoomIn(event):
-        view.zoom *= 1.25
+        app.view.zoom *= 1.25
     elif is_ZoomOut(event):
-        view.zoom /= 1.25
+        app.view.zoom /= 1.25
     elif is_ZoomFit(event):
-        view.zoom = view.get_fit_zoom()
+        app.view.zoom = app.view.get_fit_zoom()
     elif is_Zoom100(event):
-        view.zoom = 1.0
+        app.view.zoom = 1.0
     elif is_ToggleColorspace(event):
-        view.toggle_colorspace()
+        app.view.toggle_colorspace()
 
-    view.update()
+    app.view.update()
 
 app.close()
