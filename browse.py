@@ -48,17 +48,20 @@ import json
 import os.path
 
 # print("PyMuPDF version: ", fitz.version)
-# print(fitz.__doc__)
+print(fitz.__doc__)
+print('PySimpleGUI version: ', sg.version)
 
-# use config file if present in current directory
-config_file_name = "./browse.config"
+# ------------------------------------------------------------------------------
+# Configuration - app configuration storage
+# ------------------------------------------------------------------------------
 
 class Configuration:
     """
     Application configuration store and persistency.
+    Default is storage is „browse.config” file in current directory.
     """
 
-    def __init__(self, path):
+    def __init__(self, path="./browse.config"):
         self.path = path
         self._config = dict()
 
@@ -90,7 +93,29 @@ class Configuration:
             history.insert(0, view_dictionary)
             self._config["history"] = history
         
-configuration = Configuration(config_file_name)
+# ------------------------------------------------------------------------------
+# Document class
+# ------------------------------------------------------------------------------
+
+##class Document():
+##    """
+##    Encapsulate open document data.
+##    """
+##
+##    def __init__(self):
+##        pass
+##
+##class PyMuPDFDocument(Document):
+##    """
+##    Encapsulate open document data.
+##    
+##    file_name = file name of viewed document
+##    doc = fitz (PyMuPDF) document instance bound to the view
+##    doc_page_count = page count of document
+##    """
+##
+##    def __init__(self, file_name):
+##        pass
 
 # ------------------------------------------------------------------------------
 # ViewDoc class
@@ -111,16 +136,45 @@ class DocumentView:
     dpi - display dpi
     """
     
-    def __init__(self, file_name, page_index=0, max_size=None, colorspace=fitz.csRGB, zoom=1.0, dpi=94):
+    def __init__(self, file_name, page_index=0, max_size=None,
+                 colorspace=fitz.csRGB, zoom=1.0, dpi=94, location=(0,0)):
+        # initialize document
         self.file_name = file_name
         self.doc = fitz.open(file_name)
         self.doc_page_count = len(self.doc)
+        self.cache = dict()
         self.page_index = page_index
         self.zoom = zoom
-        self.cache = dict()
-        self.max_size = max_size
         self.colorspace = colorspace
         self.dpi=dpi
+        # get physical screen dimension to determine the page image max size
+        # print("screen size = " sg.Window.get_screen_size())
+        if not max_size:
+            w, h = sg.Window.get_screen_size()
+            max_width = w - 20
+            max_height = h - 55
+            self.max_size = (max_width, max_height)
+        # initialize view
+        self.image_elem = sg.Image(data=self.get_page_image())  # make image element
+        layout = [ [self.image_elem] ]
+        self.form = sg.Window(title=self.get_view_title(),
+                              layout=layout,
+                              resizable=True,
+                              return_keyboard_events=True,
+                              location=location,
+                              use_default_focus=False,
+                              finalize=True,
+                              enable_close_attempted_event=True,
+                              )
+        self.form.TKroot.focus_force()
+
+        # define keybindings not known to PySimpleGUI (key with modifier)
+        self.form.bind('<Control-KeyPress-q>', "key-CTRL-Q")
+        self.form.bind('<KeyPress-q>', "key-q")
+        self.form.bind('<Shift-KeyPress-q>', "key-Q")
+        self.form.bind('<Alt-KeyPress-q>', "key-ALT-q") # this is needed to suppress 'ALT-q' to act as 'q' (exit application)
+        self.form.bind('<KeyPress-Home>', "key-Home")
+        self.form.bind('<KeyPress-F1>', "key-F1")
 
     @classmethod
     def from_config(cls, config_dictionary, max_size=None):
@@ -133,6 +187,7 @@ class DocumentView:
                    zoom=d['zoom'],
                    colorspace=cls._colorspace_from_name(d['colorspace']),
                    max_size=max_size,
+                   location=d['location'] if 'location' in d else (0,0),
                    )
 
     @classmethod
@@ -149,10 +204,14 @@ class DocumentView:
         """
         Return dictionary for saving parameters in config file.
         """
+        location = self.get_location()
+        if not location or not location[0] or not location[1]:
+            location = (0,0)
         return {"file_name": self.file_name,
                 "page": self.page_index,
                 "zoom": self.zoom,
                 "colorspace": self.colorspace.name,
+                "location": location,
                 }
 
     def get_display_list(self):
@@ -249,17 +308,55 @@ class DocumentView:
             self.colorspace = fitz.csRGB
         else:
             self.colorspace = fitz.csGRAY
-            
 
-# ------------------------------------------------------------------------------
-# get physical screen dimension to determine the page image max size
-# ------------------------------------------------------------------------------
+    def update(self):
+        # update view
+        self.image_elem.Update(data=view.get_page_image())
+        # update form title
+        self.form.set_title(self.get_view_title())
+        self.get_location()
 
-# print("screen size = " + str(sg.Window.get_screen_size()))
-w, h = sg.Window.get_screen_size()
-max_width = w - 20
-max_height = h - 55
-max_size = (max_width, max_height)
+    def get_location(self):
+        loc = self.form.current_location()
+        print('location: ', loc)
+        return loc
+
+    def get_size(self):
+        return self.form.current_size_accurate()
+
+    def center_window_on_screen(self):
+        self.form.move_to_center()
+
+    def close(self):
+        self.form.close()
+
+class DocumentBrowser():
+    """
+    Application main class.
+    """
+
+    def __init__(self):
+        self.configuration = Configuration()
+        # self.documents = [] # for future multiple documents app
+        # self.views = [] # for future multiple views app
+        self.view = None # active view
+
+    def start(self, argv):
+        if self.configuration.get_history():
+            self.view = DocumentView.from_config(self.configuration.get_history()[0])
+        elif len(argv) == 1:
+            self.view = DocumentView(get_filename_from_open_GUI(), page_index=0)
+            #self.view.center_window_on_screen()
+        elif len(argv) == 2 and os.path.isfile(sys.argv[1]):
+            self.view = DocumentView(argv[1], page_index=0)
+            #self.view.center_window_on_screen()
+        else:
+            sg.Popup("Cancelling:", "No file to view")
+            sys.exit("Cancelled: no file to view supplied")
+        #self.views.push(self.view)
+
+    def close(self):
+        self.view.close()
 
 # ------------------------------------------------------------------------------
 # utilities and popups
@@ -283,8 +380,8 @@ def get_filename_from_open_GUI():
     )
     return fname
 
-def get_filename_from_history_GUI():
-    values = configuration.get_history()
+def get_filename_from_history_GUI(app):
+    values = app.configuration.get_history()
     # make list of history entries as human readable labels
     labels = [value['file_name'] for value in values]
     window = sg.Window(title = "Select file from history",
@@ -327,153 +424,118 @@ def show_help_page_GUI():
     window.close()
     return None
 
-# ------------------------------------------------------------------------------
-# startup sequence - determine document to open
-# ------------------------------------------------------------------------------
-
-if configuration.get_history():
-    view = DocumentView.from_config(configuration.get_history()[0], max_size=max_size)
-elif len(sys.argv) == 1:
-    view = DocumentView(get_filename_from_GUI(), page_index=0, max_size=max_size)
-elif len(sys.argv) == 2 and os.path.isfile(sys.argv[1]):
-    view = DocumentView(sys.argv[1], page_index=0, max_size=max_size)
-else:
-    sg.Popup("Cancelling:", "No file to view")
-    sys.exit("Cancelled: no file to view supplied")
 
 
-image_elem = sg.Image(data=view.get_page_image())  # make image element
-
-layout = [  # the form layout
-    [image_elem],
-]
-
-form = sg.Window(
-    title=view.get_view_title(),
-    layout=layout,
-    resizable=True,
-    return_keyboard_events=True,
-    location=(0, 0),
-    use_default_focus=False,
-    finalize=True,
-)
-
-# center window at startup
-form.move_to_center()
-
-# define keybindings not known to PySimpleGUI (key with modifier)
-form.bind('<Control-KeyPress-q>', "key-CTRL-Q")
-form.bind('<KeyPress-q>', "key-q")
-form.bind('<Shift-KeyPress-q>', "key-Q")
-form.bind('<Alt-KeyPress-q>', "key-ALT-q") # this is needed to suppress 'ALT-q' to act as 'q' (exit application)
-form.bind('<KeyPress-Home>', "key-Home")
-form.bind('<KeyPress-F1>', "key-F1")
 
 
 # define the events we want to handle
 
-def is_Quit(btn):
-    return btn == sg.WIN_CLOSED or btn.startswith("Escape:") or btn in (chr(27), 'key-q', 'key-SHIFT-Q', "key-CTRL-Q")
+def is_Quit(event):
+    #return event == sg.WIN_CLOSED or event.startswith("Escape:") or event in (chr(27), 'key-q', 'key-SHIFT-Q', "key-CTRL-Q")
+    return event == sg.WINDOW_CLOSE_ATTEMPTED_EVENT or event.startswith("Escape:") or event in (chr(27), 'key-q', 'key-SHIFT-Q', "key-CTRL-Q")
 
-def is_Next(btn):
-    return btn.startswith("Next") or btn == "MouseWheel:Down" or btn.startswith("Up:") or btn.startswith("Right:")
+def is_Next(event):
+    return event.startswith("Next") or event == "MouseWheel:Down" or event.startswith("Up:") or event.startswith("Right:")
 
-def is_Prior(btn):
-    return btn.startswith("Prior") or btn == "MouseWheel:Up" or btn.startswith("Down:") or btn.startswith("Left:")
+def is_Prior(event):
+    return event.startswith("Prior") or event == "MouseWheel:Up" or event.startswith("Down:") or event.startswith("Left:")
 
-def is_Goto(btn):
-    return btn in ('g', 'G')
+def is_Goto(event):
+    return event in ('g', 'G')
     
-def is_GotoFirstPage(btn):
-    return btn in ('key-Home',)
+def is_GotoFirstPage(event):
+    return event in ('key-Home',)
     
-def is_Open(btn):
-    return btn in ('o', 'O')
+def is_Open(event):
+    return event in ('o', 'O')
 
-def is_OpenFromHistory(btn):
-    return btn in ('h', 'H')
+def is_OpenFromHistory(event):
+    return event in ('h', 'H')
 
-def is_ZoomIn(btn):
-    return btn == '+'
+def is_ZoomIn(event):
+    return event == '+'
 
-def is_ZoomOut(btn):
-    return btn == '-'
+def is_ZoomOut(event):
+    return event == '-'
 
-def is_ZoomFit(btn):
-    return btn in ('f', 'F', '*')
+def is_ZoomFit(event):
+    return event in ('f', 'F', '*')
 
-def is_Zoom100(btn):
-    return btn in ('0',) 
+def is_Zoom100(event):
+    return event in ('0',) 
 
-def is_ToggleColorspace(btn):
-    return btn in ('c', 'C') 
+def is_ToggleColorspace(event):
+    return event in ('c', 'C') 
 
-def is_ShowHelpPage(btn):
-    return btn in ('key-F1')
-
-##def is_Redraw(btn):
-##    return any((is_Next(btn), is_Prior(btn), is_Goto(btn), is_GotoFirstPage(btn),
-##                is_ZoomIn(btn), is_ZoomOut(btn), is_ZoomFit(btn), is_Zoom100(btn),
-##                is_Open(btn), is_ToggleColorspace(btn)))
+def is_ShowHelpPage(event):
+    return event in ('key-F1')
 
 # ------------------------------------------------------------------------------
+# startup sequence - determine document to open
+# ------------------------------------------------------------------------------
+
+app = DocumentBrowser()
+
+app.start(sys.argv)
+
+#configuration = app.configuration
+view = app.view
+
 # main event loop
-# ------------------------------------------------------------------------------
 
 while True:
-    btn, value = form.Read()
+    event, value = view.form.Read()
 
-    if is_Quit(btn):
-        configuration.update_history(view.config_dictionary())
-        configuration.save()
+    if is_Quit(event):
+        app.configuration.update_history(view.config_dictionary())
+        app.configuration.save()
         break
 
-    if is_Open(btn):
+    if is_Open(event):
         fname = get_filename_from_open_GUI()
         if fname:
-            configuration.update_history(view.config_dictionary())
-            configuration.save()
-            view_history = configuration.get_view_history(fname)
+            app.configuration.update_history(view.config_dictionary())
+            app.configuration.save()
+            view_history = app.configuration.get_view_history(fname)
             if view_history:
-                view = DocumentView.from_config(view_history, max_size=max_size)
+                view.close()
+                view = DocumentView.from_config(view_history)
             else:
-                view = DocumentView(fname, page_index=0, max_size=max_size)
+                view.close()
+                view = DocumentView(fname, page_index=0)
+                view.center_window_on_screen()
     
-    if is_OpenFromHistory(btn):
-        view_history = get_filename_from_history_GUI()
-        configuration.update_history(view.config_dictionary())
-        configuration.save()
+    if is_OpenFromHistory(event):
+        view_history = get_filename_from_history_GUI(app)
+        app.configuration.update_history(view.config_dictionary())
+        app.configuration.save()
         if view_history and os.path.isfile(view_history['file_name']):
-            view = DocumentView.from_config(view_history, max_size=max_size)
+            view.close()
+            view = DocumentView.from_config(view_history)
 
-    elif is_Next(btn):
+    elif is_Next(event):
         view.next_page()
-    elif is_Prior(btn):
+    elif is_Prior(event):
         view.previous_page()
-    elif is_Goto(btn):
+    elif is_Goto(event):
         index = get_page_number_from_GUI()
         if index:
             view.go_to_page(index)
-    elif is_GotoFirstPage(btn):
+    elif is_GotoFirstPage(event):
         view.go_to_page(0)
-    elif is_ZoomIn(btn):
+    elif is_ZoomIn(event):
         view.zoom *= 1.25
-    elif is_ZoomOut(btn):
+    elif is_ZoomOut(event):
         view.zoom /= 1.25
-    elif is_ZoomFit(btn):
+    elif is_ZoomFit(event):
         view.zoom = view.get_fit_zoom()
-    elif is_Zoom100(btn):
+    elif is_Zoom100(event):
         view.zoom = 1.0
-    elif is_ToggleColorspace(btn):
+    elif is_ToggleColorspace(event):
         view.toggle_colorspace()
-    elif is_ShowHelpPage(btn):
+    elif is_ShowHelpPage(event):
         show_help_page_GUI()
 
-    # update view
-    image_elem.Update(data=view.get_page_image())
+    view.update()
 
-    # update form title
-    #if is_Redraw(btn):
-    form.set_title(view.get_view_title())
-
-form.close()
+app.close()
