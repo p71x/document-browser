@@ -321,7 +321,7 @@ class DocumentView:
 
     def get_location(self):
         loc = self.form.current_location()
-        print('location: ', loc)
+        #print('location: ', loc)
         return loc
 
     def get_size(self):
