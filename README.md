@@ -23,7 +23,7 @@ formats: JPG/JPEG, PNG, BMP, GIF, TIFF, PNM, PGM, PBM, PPM, PAM, JXR, JPX/JP2),
 but so far I test application only with PDF and EPUB files.
 
 Application utilises mainly keyboard events (and some mouse wheel) to trigger actions.
-There are no buttons. 
+There are no buttons or menus. 
 
 Actions supported include (action: key, alternative key...):
 - Help page: F1,
