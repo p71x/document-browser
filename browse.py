@@ -92,6 +92,9 @@ class Configuration:
             history = [x for x in history if x['file_name'] != view_dictionary['file_name']]
             history.insert(0, view_dictionary)
             self._config["history"] = history
+        # persist changes
+        self.save()
+
         
 # ------------------------------------------------------------------------------
 # Document class
@@ -471,14 +474,13 @@ def is_ShowHelpPage(event):
     return event in ('key-F1')
 
 # ------------------------------------------------------------------------------
-# startup sequence - determine document to open
+# Application life cycle
 # ------------------------------------------------------------------------------
 
 app = DocumentBrowser()
 
 app.start(sys.argv)
 
-#configuration = app.configuration
 view = app.view
 
 # main event loop
@@ -488,14 +490,12 @@ while True:
 
     if is_Quit(event):
         app.configuration.update_history(view.config_dictionary())
-        app.configuration.save()
         break
 
     if is_Open(event):
         fname = get_filename_from_open_GUI()
         if fname:
             app.configuration.update_history(view.config_dictionary())
-            app.configuration.save()
             view_history = app.configuration.get_view_history(fname)
             if view_history:
                 view.close()
@@ -508,7 +508,6 @@ while True:
     if is_OpenFromHistory(event):
         view_history = get_filename_from_history_GUI(app)
         app.configuration.update_history(view.config_dictionary())
-        app.configuration.save()
         if view_history and os.path.isfile(view_history['file_name']):
             view.close()
             view = DocumentView.from_config(view_history)
