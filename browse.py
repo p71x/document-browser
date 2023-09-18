@@ -178,6 +178,7 @@ class DocumentView:
         self.form.bind('<Alt-KeyPress-q>', "key-ALT-q") # this is needed to suppress 'ALT-q' to act as 'q' (exit application)
         self.form.bind('<KeyPress-Home>', "key-Home")
         self.form.bind('<KeyPress-F1>', "key-F1")
+        self.form.bind('<FocusIn>','FOCUS IN')
 
     @classmethod
     def from_config(cls, config_dictionary, max_size=None):
@@ -317,11 +318,13 @@ class DocumentView:
         self.image_elem.Update(data=self.get_page_image())
         # update form title
         self.form.set_title(self.get_view_title())
-        self.get_location()
 
     def get_location(self):
-        loc = self.form.current_location()
-        #print('location: ', loc)
+        try:
+            loc = self.form.current_location()
+        except Exception:
+            print(Exception)
+            loc = (0,0)
         return loc
 
     def get_size(self):
@@ -333,6 +336,7 @@ class DocumentView:
     def close(self):
         self.form.close()
 
+
 class DocumentBrowser():
     """
     Application main class.
@@ -341,26 +345,62 @@ class DocumentBrowser():
     def __init__(self):
         self.configuration = Configuration()
         # self.documents = [] # for future multiple documents app
-        # self.views = [] # for future multiple views app
+        self.views = [] # for future multiple views app
         self.view = None # active view
 
     def start(self, argv):
         if self.configuration.get_history():
-            self.view = DocumentView.from_config(self.configuration.get_history()[0])
+            app.add_view(DocumentView.from_config(self.configuration.get_history()[0]))
         elif len(argv) == 1:
-            self.view = DocumentView(get_filename_from_open_GUI(), page_index=0)
-            #self.view.center_window_on_screen()
+            app.add_view(DocumentView(get_filename_from_open_GUI(), page_index=0))
         elif len(argv) == 2 and os.path.isfile(sys.argv[1]):
-            self.view = DocumentView(argv[1], page_index=0)
-            #self.view.center_window_on_screen()
+            app.add_view(DocumentView(argv[1], page_index=0))
         else:
             sg.Popup("Cancelling:", "No file to view")
             sys.exit("Cancelled: no file to view supplied")
-        #self.views.push(self.view)
 
-    def close(self):
+    def add_view(self, view):
+        """
+        Add view to application.
+        """
+        self.view = view
+        self.views.insert(0, self.view)
+        #print('Add view: ', view)
+        #print('Views: ', self.views)
+
+    def set_active_view(self, window):
+        # find view with this window
+        view = [x for x in self.views if x.form == window][0]
+        print
+        if isinstance(view, DocumentView):
+            self.view = view
+            print('Set active: ', view)
+        else:
+            print('Wrong type of object: ', view)
+
+    def close(self, view):
+        """
+        Close application window,
+        swith focus to next window and return `False`
+        or exit application if last window closed and return `True`.
+        """
+        self.configuration.update_history(self.view.config_dictionary())
+        self.views.remove(self.view)
+        #print('Quit view: ', self.view)
+        #print('Views: ', self.views)
         self.view.close()
+        if self.views:
+            self.view = self.views[0]
+            return False
+        else:
+            return True
 
+    def finalize(self):
+        """
+        End actions after exit from application event loop.
+        """
+        pass
+    
 # ------------------------------------------------------------------------------
 # utilities and popups
 # ------------------------------------------------------------------------------
@@ -456,10 +496,10 @@ def is_OpenFromHistory(event):
     return event in ('h', 'H')
 
 def is_ZoomIn(event):
-    return event == '+'
+    return event in ('+', )
 
 def is_ZoomOut(event):
-    return event == '-'
+    return event in ('-', )
 
 def is_ZoomFit(event):
     return event in ('f', 'F', '*')
@@ -471,7 +511,10 @@ def is_ToggleColorspace(event):
     return event in ('c', 'C') 
 
 def is_ShowHelpPage(event):
-    return event in ('key-F1')
+    return event in ('key-F1', )
+
+def is_FocusIn(event):
+    return event in ('FOCUS IN', )
 
 # ------------------------------------------------------------------------------
 # Application life cycle
@@ -484,13 +527,21 @@ app.start(sys.argv)
 # main event loop
 
 while True:
-    event, value = app.view.form.Read()
+    # event, value = app.view.form.Read()
+    window, event, value = sg.read_all_windows()
 
     # application events
 
     if is_Quit(event):
-        app.configuration.update_history(app.view.config_dictionary())
-        break
+        print('Event – window: ', window, ', event: ', event, ', value: ',  value)
+        is_last = app.close(window)
+        print('Is last window: ', is_last)
+        if is_last:
+            break
+
+    if is_FocusIn(event):
+        print('Event – window: ', window, ', event: ', event, ', value: ',  value)
+        app.set_active_view(window)
 
     if is_Open(event):
         fname = get_filename_from_open_GUI()
@@ -498,19 +549,16 @@ while True:
             app.configuration.update_history(app.view.config_dictionary())
             view_history = app.configuration.get_view_history(fname)
             if view_history:
-                app.view.close()
-                app.view = DocumentView.from_config(view_history)
+                app.add_view(DocumentView.from_config(view_history))
             else:
-                app.view.close()
-                app.view = DocumentView(fname, page_index=0)
+                app.add_view(DocumentView(fname, page_index=0))
                 app.view.center_window_on_screen()
     
     if is_OpenFromHistory(event):
         view_history = get_filename_from_history_GUI(app)
         app.configuration.update_history(app.view.config_dictionary())
         if view_history and os.path.isfile(view_history['file_name']):
-            app.view.close()
-            app.view = DocumentView.from_config(view_history)
+            app.add_view(DocumentView.from_config(view_history))
 
     elif is_ShowHelpPage(event):
         show_help_page_GUI()
@@ -518,8 +566,10 @@ while True:
     # view events
 
     elif is_Next(event):
+        print('Event – window: ', window, ', event: ', event, ', value: ',  value)
         app.view.next_page()
     elif is_Prior(event):
+        print('Event – window: ', window, ', event: ', event, ', value: ',  value)
         app.view.previous_page()
     elif is_Goto(event):
         index = get_page_number_from_GUI()
@@ -540,4 +590,4 @@ while True:
 
     app.view.update()
 
-app.close()
+app.finalize()
