@@ -13,17 +13,23 @@ to prompt for file or open last viewed file (if config file present): `python br
 ## Description
 
 Get filename and start displaying page 1. If filename is saved in history,
-then start with saved page number and zoom. Please note that all file types
-of MuPDF are supported (PDF, XPS, EPUB, MOBI, FB2, CBZ, SVG and some graphics 
-formats: JPG/JPEG, PNG, BMP, GIF, TIFF, PNM, PGM, PBM, PPM, PAM, JXR, JPX/JP2),
-but I tested it only with PDF and EPUB.
+then start with saved page number, window position and zoom. If there is config file present, 
+and no filename given at startup, then on start automatically opens last viewed document. 
+You can open more windows with additional documents and close them indywidually. Application ends 
+when last file is closed. 
 
-We utilise keyboard events and mouse wheel actions to trigger actions.
-There are no buttons. Actions supported (action: key, alternative key...):
+Theoretically all file types supported by MuPDF are supported (PDF, XPS, EPUB, MOBI, FB2, CBZ, SVG and some graphics 
+formats: JPG/JPEG, PNG, BMP, GIF, TIFF, PNM, PGM, PBM, PPM, PAM, JXR, JPX/JP2),
+but so far I test application only with PDF and EPUB files.
+
+Application utilises mainly keyboard events (and some mouse wheel) to trigger actions.
+There are no buttons. 
+
+Actions supported include (action: key, alternative key...):
 - Help page: F1,
-- Exit: q, Q, Esc,
+- Close file: q, Q, Esc,
 - Open file: o, O,
-- Open file from history: f, F,
+- Open file from history: h, H,
 - Next page: Right, Up, PageDown, Mouse:ScrollDown
 - Previous page: Left, Down, PageUp, Mouse:ScrollUp
 - Go to page: g, G
@@ -37,3 +43,5 @@ There are no buttons. Actions supported (action: key, alternative key...):
 ## License
 
 AGPL because of PyMuPDF license – and it is viral :(
+If You consider use of some code from this project and don't plan using PyMuPdf, 
+then code can be dual licensed under more free license as MIT or BSD.
