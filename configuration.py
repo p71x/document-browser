@@ -53,7 +53,7 @@ class Configuration:
             with open(path, "r") as read_file:
                 self._config = json.load(read_file)
 
-    def save(self, backup=True):
+    def save(self, backup=False):
         """
         Save all configuration data to disk.
         """
