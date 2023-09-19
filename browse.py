@@ -48,6 +48,8 @@ import fitz
 import PySimpleGUI as sg
 import json
 import os.path
+from pathlib import Path
+from datetime import datetime
 
 print('Document-browser version: ', version)
 # print("PyMuPDF version: ", fitz.version)
@@ -65,14 +67,24 @@ class Configuration:
     """
 
     def __init__(self, path="./browse.config"):
-        self.path = path
+        """
+        Load configuration from file. By default configuration
+        is stored in `browse.config` file in current directory.
+        """
+        self.path = Path(path)
         self._config = dict()
-
         if os.path.isfile(path):
             with open(path, "r") as read_file:
                 self._config = json.load(read_file)
 
-    def save(self):
+    def save(self, backup=False):
+        """
+        Save all configuration data to disk.
+        """
+        if backup:
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+            p = self.path
+            p.rename(Path(p.parent, f"{p.stem}_{timestamp}{p.suffix}"))
         with open(self.path, "w") as write_file:
             json.dump(self._config, write_file, indent=2)
 
@@ -95,9 +107,25 @@ class Configuration:
             history = [x for x in history if x['file_name'] != view_dictionary['file_name']]
             history.insert(0, view_dictionary)
             self._config["history"] = history
-        # persist changes
         self.save()
 
+    def get_session(self):
+        if 'session' in self._config:
+            return self._config['session']
+        else:
+            return None
+
+    def update_session(self, app):
+        self._config['session'] = app.get_session()
+        if 'history' not in self._config:
+            self._config['history'] = []
+        history = self._config["history"]
+        for view in app.views + [app.view]:
+            data = view.config_dictionary()
+            history = [x for x in history if x['file_name'] != data['file_name']]
+            history.insert(0, data)
+        self._config["history"] = history
+        self.save(backup=True)
         
 # ------------------------------------------------------------------------------
 # Document class
@@ -361,7 +389,10 @@ class DocumentBrowser():
         self.view = None # active view
 
     def start(self, argv):
-        if self.configuration.get_history():
+        if self.configuration.get_session():
+            for fname in self.configuration.get_session():
+                app.add_view(DocumentView.from_config(self.configuration.get_history()))
+        elif self.configuration.get_history():
             app.add_view(DocumentView.from_config(self.configuration.get_history()[0]))
         elif len(argv) == 1:
             app.add_view(DocumentView(get_filename_from_open_GUI(), page_index=0))
@@ -487,8 +518,11 @@ def show_help_page_GUI():
 
 def is_Quit(event):
     #return event == sg.WIN_CLOSED or event.startswith("Escape:") or event in (chr(27), 'key-q', 'key-SHIFT-Q', "key-CTRL-Q")
-    return event == sg.WINDOW_CLOSE_ATTEMPTED_EVENT or event.startswith("Escape:") or event in (chr(27), 'key-q', 'key-SHIFT-Q', "key-CTRL-Q")
+    return event == sg.WINDOW_CLOSE_ATTEMPTED_EVENT or event in ('key-q', 'key-SHIFT-Q', "key-CTRL-Q")
 
+def is_QuitAll(event):
+    return event.startswith("Escape:")
+    
 def is_Next(event):
     return event.startswith("Next") or event == "MouseWheel:Down" or event.startswith("Up:") or event.startswith("Right:")
 
@@ -550,6 +584,9 @@ while True:
         print('Is last window: ', is_last)
         if is_last:
             break
+
+    if is_QuitAll(event):
+        break
 
     if is_FocusIn(event):
         print('Event – window: ', window, ', event: ', event, ', value: ',  value)
