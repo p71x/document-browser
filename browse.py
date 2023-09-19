@@ -41,12 +41,15 @@ help_text = """Actions supported (action, key):
 - Help page: F1
 """
 
+version = '0.001, pre alpha'
+
 import sys
 import fitz
 import PySimpleGUI as sg
 import json
 import os.path
 
+print('Document-browser version: ', version)
 # print("PyMuPDF version: ", fitz.version)
 print(fitz.__doc__)
 print('PySimpleGUI version: ', sg.version)
