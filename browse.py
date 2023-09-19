@@ -46,10 +46,7 @@ version = '0.001, pre alpha'
 import sys
 import fitz
 import PySimpleGUI as sg
-import json
 import os.path
-from pathlib import Path
-from datetime import datetime
 
 print('Document-browser version: ', version)
 # print("PyMuPDF version: ", fitz.version)
