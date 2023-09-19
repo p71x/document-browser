@@ -37,7 +37,8 @@ help_text = """Actions supported (action, key):
 - Zoom out: -
 - Zoom fit: f, F, *
 - Zoom 100%: 0 (zero key) 
-- Exit: q, Q, Esc,
+- Close single view: q, Q,
+- Exit application: Esc,
 - Help page: F1
 """
 
@@ -319,8 +320,8 @@ class DocumentBrowser():
 
     def start(self, argv):
         if self.configuration.get_session():
-            for fname in self.configuration.get_session():
-                app.add_view(DocumentView.from_config(self.configuration.get_history()))
+            for path in self.configuration.get_session():
+                app.add_view(DocumentView.from_config(self.configuration.get_view_history(path)))
         elif self.configuration.get_history():
             app.add_view(DocumentView.from_config(self.configuration.get_history()[0]))
         elif len(argv) == 1:
@@ -366,6 +367,14 @@ class DocumentBrowser():
             return False
         else:
             return True
+
+    def close_all_views(self):
+        """
+        Close all application documents, save session.
+        """
+        self.configuration.save_session(app)
+        for view in self.views:
+            view.close()
 
     def finalize(self):
         """
@@ -515,6 +524,7 @@ while True:
             break
 
     if is_QuitAll(event):
+        app.close_all_views()
         break
 
     if is_FocusIn(event):
