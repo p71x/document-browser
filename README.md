@@ -27,7 +27,8 @@ There are no buttons or menus.
 
 Actions supported include (action: key, alternative key...):
 - Help page: F1,
-- Close file: q, Q, Esc,
+- Close single view: q, Q, 
+- Exit application: Esc,
 - Open file: o, O,
 - Open file from history: h, H,
 - Next page: Right, Up, PageDown, Mouse:ScrollDown
