@@ -100,25 +100,34 @@ class Configuration:
 # Document class
 # ------------------------------------------------------------------------------
 
-##class Document():
-##    """
-##    Encapsulate open document data.
-##    """
-##
-##    def __init__(self):
-##        pass
-##
-##class PyMuPDFDocument(Document):
-##    """
-##    Encapsulate open document data.
-##    
-##    file_name = file name of viewed document
-##    doc = fitz (PyMuPDF) document instance bound to the view
-##    doc_page_count = page count of document
-##    """
-##
-##    def __init__(self, file_name):
-##        pass
+# That classes below are unused – it is preparation for
+# separation of DocumentView class into two parts Document and View.
+
+
+class Document():
+    """
+    Encapsulate open document data. Document is has some path,
+    metadata, collection of pages/images etc. Examples of documents
+    will be pdf file as collection of pages or directory with graphics
+    files as collection of images...
+    """
+
+    def __init__(self):
+        pass
+
+
+class PyMuPDFDocument(Document):
+    """
+    Encapsulate open PyMuPDF document data (for collections
+    of pages aas PDF or EPUB files for example).
+
+    file_name = file name of viewed document
+    doc = fitz (PyMuPDF) document instance bound to the view
+    doc_page_count = page count of document
+    """
+
+    def __init__(self, file_name):
+        pass
 
 # ------------------------------------------------------------------------------
 # ViewDoc class
