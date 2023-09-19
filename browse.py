@@ -125,13 +125,24 @@ class DocumentView:
         if not max_size:
             w, h = sg.Window.get_screen_size()
             max_width = w - 20
-            max_height = h - 55
+            max_height = h - 75
             self.max_size = (max_width, max_height)
         # initialize view
-        self.image_elem = sg.Image(data=self.get_page_image())  # make image element
-        layout = [ [self.image_elem] ]
+        img, w, h = self.get_page_image()
+        self.image_elem= sg.Image(data=img)  # make image element
+        mw, mh = self.max_size
+        print(mw, mh, w, h, self.max_size)
+        w = min(w, mw)
+        h = min(h, mh)
+        layout = [[sg.Column(layout=[[self.image_elem],],
+                             size=(w,h),
+                             scrollable=True,
+                             expand_x=True,
+                             expand_y=True,
+                             )],]
         self.form = sg.Window(title=self.get_view_title(),
                               layout=layout,
+                              margins=(1,1), element_padding=(0,0),
                               resizable=True,
                               return_keyboard_events=True,
                               location=location,
@@ -211,7 +222,7 @@ class DocumentView:
         pixmap = display_list.get_pixmap(matrix=matrix, #dpi=96,
                                          colorspace=self.colorspace,
                                          alpha=False)
-        return pixmap.tobytes("ppm")  # make PPM image from pixmap for tkinter, requires PyMuPDF version > 1.14.5
+        return pixmap.tobytes("ppm"), pixmap.width, pixmap.height  # make PPM image from pixmap for tkinter, requires PyMuPDF version > 1.14.5
 
     def get_fit_zoom(self, fit_size=None):
         """
@@ -285,7 +296,8 @@ class DocumentView:
 
     def update(self):
         # update view
-        self.image_elem.Update(data=self.get_page_image())
+        img, w, h = self.get_page_image()
+        self.image_elem.Update(data=img)
         # update form title
         self.form.set_title(self.get_view_title())
 
