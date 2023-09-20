@@ -141,6 +141,7 @@ class DocumentView:
                              expand_y=True,
                              )],]
         self.form = sg.Window(title=self.get_view_title(),
+                              icon='./temp/Oxygen-Icons.org-Oxygen-Apps-graphics-viewer-document.ico',
                               layout=layout,
                               margins=(1,1), element_padding=(0,0),
                               resizable=True,
