@@ -328,7 +328,7 @@ class DocumentBrowser():
     def __init__(self):
         self.configuration = Configuration()
         # self.documents = [] # for future multiple documents app
-        self.views = [] # for future multiple views app
+        self.views = [] # list of open views
         self.view = None # active view
 
     def start(self, argv):
@@ -351,8 +351,6 @@ class DocumentBrowser():
         """
         self.view = view
         self.views.insert(0, self.view)
-        #print('Add view: ', view)
-        #print('Views: ', self.views)
 
     def set_active_view(self, window):
         # find view with this window
@@ -372,8 +370,6 @@ class DocumentBrowser():
         """
         self.configuration.update_history(self.view.config_dictionary())
         self.views.remove(self.view)
-        #print('Quit view: ', self.view)
-        #print('Views: ', self.views)
         self.view.close()
         if self.views:
             self.view = self.views[0]
@@ -468,7 +464,6 @@ def show_help_page_GUI():
 # define the events we want to handle
 
 def is_Quit(event):
-    #return event == sg.WIN_CLOSED or event.startswith("Escape:") or event in (chr(27), 'key-q', 'key-SHIFT-Q', "key-CTRL-Q")
     return event == sg.WINDOW_CLOSE_ATTEMPTED_EVENT or event in ('key-q', 'key-SHIFT-Q', "key-CTRL-Q")
 
 def is_QuitAll(event):
