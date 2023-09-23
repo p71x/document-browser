@@ -90,6 +90,20 @@ class PyMuPDFDocument(Document):
     def __init__(self, file_name):
         pass
 
+
+class ImageCollectionDocument(Document):
+    """
+    Encapsulate collection of images and present it as multipage document.
+
+    file_name = path directory of documents
+    doc =  sorted list of images
+    doc_page_count = images count of document
+    """
+
+    def __init__(self, file_name):
+        pass
+
+
 # ------------------------------------------------------------------------------
 # ViewDoc class
 # ------------------------------------------------------------------------------
@@ -562,10 +576,8 @@ while True:
     # view events
 
     elif is_Next(event):
-        print('Event – window: ', window, ', event: ', event, ', value: ',  value)
         app.view.next_page()
     elif is_Prior(event):
-        print('Event – window: ', window, ', event: ', event, ', value: ',  value)
         app.view.previous_page()
     elif is_Goto(event):
         index = get_page_number_from_GUI()
