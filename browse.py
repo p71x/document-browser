@@ -374,9 +374,9 @@ class DocumentBrowser():
         print
         if isinstance(view, DocumentView):
             self.view = view
-            print('Set active: ', view)
+            logging.info(f"Set active view: {view}")
         else:
-            print('Wrong type of object: ', view)
+            logging.warning(f"Wrong type of object: {view}")
 
     def close(self, view):
         """
@@ -389,8 +389,10 @@ class DocumentBrowser():
         self.view.close()
         if self.views:
             self.view = self.views[0]
+            logging.info(f"Close view, but it is not last.")
             return False
         else:
+            logging.info(f"Close last view.")
             return True
 
     def close_all_views(self):
@@ -400,12 +402,13 @@ class DocumentBrowser():
         self.configuration.save_session(app)
         for view in self.views:
             view.close()
+        logging.info(f"Close all views.")
 
     def finalize(self):
         """
         End actions after exit from application event loop.
         """
-        pass
+        logging.info(f"Close application.")
     
 # ------------------------------------------------------------------------------
 # utilities and popups
@@ -537,13 +540,12 @@ app.start(sys.argv)
 while True:
     # event, value = app.view.form.Read()
     window, event, value = sg.read_all_windows()
+    logging.info(f"Event – event: {event}, value: {value}, window: {window}")
 
     # application events
 
     if is_Quit(event):
-        logging.info(f"Event – window: {window}, event: {event}, value: {value}")
         is_last = app.close(window)
-        logging.info(f"Is last window: {is_last}")
         if is_last:
             break
 
@@ -552,7 +554,6 @@ while True:
         break
 
     if is_FocusIn(event):
-        logging.info(f"Event – window: {window}, event: {event}, value: {value}")
         app.set_active_view(window)
 
     if is_Open(event):
