@@ -54,6 +54,9 @@ print('Document-browser version: ', version)
 print(fitz.__doc__)
 print('PySimpleGUI version: ', sg.version)
 
+import logging
+#logging.basicConfig(filename='browser.log', level=logging.INFO)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 from configuration import Configuration
         
@@ -145,7 +148,6 @@ class DocumentView:
         img, w, h = self.get_page_image()
         self.image_elem= sg.Image(data=img)  # make image element
         mw, mh = self.max_size
-        print(mw, mh, w, h, self.max_size)
         w = min(w, mw)
         h = min(h, mh)
         layout = [[sg.Column(layout=[[self.image_elem],],
@@ -539,9 +541,9 @@ while True:
     # application events
 
     if is_Quit(event):
-        print('Event – window: ', window, ', event: ', event, ', value: ',  value)
+        logging.info(f"Event – window: {window}, event: {event}, value: {value}")
         is_last = app.close(window)
-        print('Is last window: ', is_last)
+        logging.info(f"Is last window: {is_last}")
         if is_last:
             break
 
@@ -550,7 +552,7 @@ while True:
         break
 
     if is_FocusIn(event):
-        print('Event – window: ', window, ', event: ', event, ', value: ',  value)
+        logging.info(f"Event – window: {window}, event: {event}, value: {value}")
         app.set_active_view(window)
 
     if is_Open(event):
