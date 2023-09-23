@@ -315,6 +315,10 @@ class DocumentView:
         # update view
         img, w, h = self.get_page_image()
         self.image_elem.Update(data=img)
+        mw, mh = self.max_size
+        w = min(w, mw)
+        h = min(h, mh)
+        self.form.size = (w, h)
         # update form title
         self.form.set_title(self.get_view_title())
 
